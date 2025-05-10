@@ -46,7 +46,7 @@ function updateGreeting(name) {
 
 // Open modal with 'n' key (only if not typing in input)
 document.addEventListener("keydown", (e) => {
-  if (e.key === "n" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+  if (e.key === "n" && e.altKey && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
     nameModal.style.display = "block";
     nameInput.value = localStorage.getItem("userName") || "";
     nameInput.focus();
@@ -114,7 +114,7 @@ for (var key in engines)
   $s.qS('.search-engines').innerHTML += `<li><p title="${engines[key][1]}">!${key}</p></li>`;
 
 document.onkeypress = (e) => {
-    if (e.key == 's')
+    if (e.ctrlKey || e.altKey || e.metaKey || e.key === "Shift") return;
       search.classList.add('active');
 
     input.focus();
@@ -270,37 +270,29 @@ setInterval(getWeather, 60000);
   }
 }
 
-// ⏱️ Time Spent on Page
-let storedTime = parseInt(localStorage.getItem("totalTimeSpent")) || 0;
-let seconds = 0;
+let sessionStart = Date.now(); // Timestamp when this tab opened
 
-function formatTime(totalSeconds) {
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
   const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
   const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
   const s = String(totalSeconds % 60).padStart(2, '0');
   return `${h}:${m}:${s}`;
 }
 
-// Update timer every second
 setInterval(() => {
-  seconds++;
-  const total = storedTime + seconds;
-  document.getElementById("timer").innerText = formatTime(total);
+  const now = Date.now();
+  const diff = now - sessionStart;
+  document.getElementById("timer").innerText = formatTime(diff);
 }, 1000);
 
-// Save to localStorage before tab is closed or refreshed
-window.addEventListener("beforeunload", () => {
-  localStorage.setItem("totalTimeSpent", storedTime + seconds);
-});
 
 // 😂 Random Joke
 async function loadJoke() {
   try {
-    const res = await fetch("https://icanhazdadjoke.com/", {
-      headers: { Accept: "application/json" }
-    });
+    const res = await fetch("https://official-joke-api.appspot.com/random_joke");
     const data = await res.json();
-    document.getElementById("tile-joke").innerText = `😂 ${data.joke}`;
+    document.getElementById("tile-joke").innerText = `😂 ${data.setup} — ${data.punchline}`;
   } catch {
     document.getElementById("tile-joke").innerText = "Could not load joke.";
   }
